@@ -8,6 +8,7 @@ import Control.Arrow ((***), second)
 import Control.Concurrent hiding (yield)
 import Control.Concurrent.STM
 import Control.Monad ((<=<), when, replicateM)
+import Control.Monad.Fail
 import Control.Monad.IO.Class
 import Data.AdditiveGroup (AdditiveGroup, (^+^), (^-^), Sum(..))
 import Data.Monoid (Monoid)
@@ -35,7 +36,7 @@ fromList [] = error "Ran out of list elements"
 -- will receive all the values of the original 'Topic' while any
 -- side-effect produced by each step of the original 'Topic' will
 -- occur only once.
--- 
+--
 -- This version of @tee@ lazily pulls data from the original 'Topic'
 -- when it is first required by a consumer of either of the returned
 -- 'Topic's. This behavior is crucial when lazily consuming the data
@@ -128,7 +129,7 @@ share t0 = do cs <- newTVarIO [] -- A list for the individual client buffers
 -- |The application @topicRate rate t@ runs 'Topic' @t@ no faster than
 -- @rate@ Hz.
 topicRate :: (Functor m, MonadIO m) => Double -> Topic m a -> Topic m a
-topicRate p t0 = Topic $ 
+topicRate p t0 = Topic $
                  do delay <- liftIO $ rateLimiter p (return ())
                     (x,t') <- runTopic t0
                     let go t = Topic $ liftIO delay >> second go <$> runTopic t
@@ -232,12 +233,12 @@ finiteDifference f = fmap (uncurry f) . consecutive
 -- 7, the new value by the integer 1, then normalizing by dividing
 -- the sum of scaled values by 8.
 weightedMeanNormalized :: Monad m =>
-                          n -> n -> (b -> b -> c) -> (n -> a -> b) -> 
+                          n -> n -> (b -> b -> c) -> (n -> a -> b) ->
                           (c -> a) -> Topic m a -> Topic m a
 weightedMeanNormalized alpha invAlpha plus scale normalize = Topic . warmup
     where warmup = uncurry go <=< runTopic
           go avg t = do (x,t') <- runTopic t
-                        let !avg' = normalize $ plus (scale alpha avg) 
+                        let !avg' = normalize $ plus (scale alpha avg)
                                                      (scale invAlpha x)
                         return (avg', Topic $ go avg' t')
 {-# INLINE weightedMeanNormalized #-}
@@ -246,7 +247,7 @@ weightedMeanNormalized alpha invAlpha plus scale normalize = Topic . warmup
 -- applied at three consecutive points. This requires a function for
 -- adding values from the 'Topic', and a function for scaling values
 -- by a fractional number.
-simpsonsRule :: (Monad m, Fractional n) => 
+simpsonsRule :: (MonadFail m, Fractional n) =>
                 (a -> a -> a) -> (n -> a -> a) -> Topic m a -> Topic m a
 simpsonsRule plus scale t0 = Topic $ do ([x,y], t') <- splitAt 2 t0
                                         go x y t'
@@ -261,7 +262,7 @@ simpsonsRule plus scale t0 = Topic $ do ([x,y], t') <- splitAt 2 t0
 -- the current average with the product of @1 - alpha@ and the newest
 -- value produced by 'Topic' @t@. The addition and scaling operations
 -- are performed using the supplied @plus@ and @scale@ functions.
-weightedMean :: (Monad m, Num n) => 
+weightedMean :: (Monad m, Num n) =>
                 n -> (a -> a -> a) -> (n -> a -> a) -> Topic m a -> Topic m a
 weightedMean alpha plus scale = weightedMean2 alpha (1 - alpha) plus scale
 {-# INLINE weightedMean #-}
@@ -304,8 +305,8 @@ gate t1 t2 = const <$> t1 <*> t2
 -- element from each list in sequence.
 concats :: (Monad m, F.Foldable f) => Topic m (f a) -> Topic m a
 concats t = Topic $ do (x, t') <- runTopic t
-                       F.foldr (\x' z -> return (x', Topic z)) 
-                               (runTopic $ concats t') 
+                       F.foldr (\x' z -> return (x', Topic z))
+                               (runTopic $ concats t')
                                x
 
 -- |Flatten a 'Topic' of 'F.Foldable' values such that old values are
@@ -318,13 +319,13 @@ interruptible s = Topic $
        signal <- newEmptyMVar         -- Demand signal
        let feedItems ys = do ft <- tryTakeMVar feeder
                              maybe (return ()) killThread ft
-                             t <- forkIO $ 
-                                  F.traverse_ (\y -> takeMVar signal >> 
-                                                     putMVar latestItem y) 
+                             t <- forkIO $
+                                  F.traverse_ (\y -> takeMVar signal >>
+                                                     putMVar latestItem y)
                                               ys
-                             putMVar feeder t 
+                             putMVar feeder t
            watchForItems t = do (x,t') <- runTopic t
-                                feedItems x 
+                                feedItems x
                                 watchForItems t'
            getAll = do putMVar signal ()
                        x <- takeMVar latestItem
@@ -387,7 +388,7 @@ slidingWindowG n = metamorph (fill S.empty)
 -- into the original structure using @inj@.
 topicOn :: (Applicative m, Monad m) =>
            (a -> b) -> (a -> c -> d) -> m (b -> m c) -> Topic m a -> Topic m d
-topicOn proj inj trans t = 
+topicOn proj inj trans t =
   Topic $ do f <- trans
              runTopic $ mapM (\x -> inj x `fmap` f (proj x)) t
 

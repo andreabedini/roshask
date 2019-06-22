@@ -46,8 +46,8 @@ serviceClient c s = forever $ do bs <- readChan c
 
 sendBS :: Socket -> ByteString -> IO ()
 sendBS sock bs =
-  let len = runPut $ 
-            putWord32le . fromIntegral $ 
+  let len = runPut $
+            putWord32le . fromIntegral $
             BL.length bs
   in
    sendAll sock (BL.toStrict $ BL.append len bs)
@@ -60,7 +60,7 @@ recvAll s = flip go []
                             else return $ B.concat (reverse (bs:acc))
 
 negotiatePub :: String -> String -> Socket -> IO ()
-negotiatePub ttype md5 sock = 
+negotiatePub ttype md5 sock =
     do headerLength <- runGet (fromIntegral <$> getWord32le) <$>
                        BL.fromChunks . (:[]) <$> recvAll sock 4
        headerBytes <- recvAll sock headerLength
@@ -68,14 +68,14 @@ negotiatePub ttype md5 sock =
            wildCard = case lookup "type" connHeader of
                         Just t | t == "*" -> True
                                | t == ttype -> False
-                               | otherwise -> error $ 
+                               | otherwise -> error $
                                               "Disagreeing Topic types: " ++
                                               "publisher expected "++ttype++
                                               ", but client asked for "++t
                         Nothing -> error $ "Client did not include the "++
                                            "topic type in its "++
                                            "connection request."
-       when (not wildCard) 
+       when (not wildCard)
             (case lookup "md5sum" connHeader of
                Just s | s == md5 -> return ()
                       | otherwise -> error "Disagreement on Topic type MD5"
@@ -92,26 +92,26 @@ negotiatePub ttype md5 sock =
 -- for cleaning up the client connection.
 -- FIXME: cleaning up a disconnected client should be reflected at a
 -- higher level, too.
-acceptClients :: Socket -> TVar [(Config (), RingChan ByteString)] -> 
+acceptClients :: Socket -> TVar [(Config (), RingChan ByteString)] ->
                  (Socket -> IO ()) -> IO (RingChan ByteString) -> Config ()
 acceptClients sock clients negotiate mkBuffer = forever acceptClient
     where acceptClient = do (client,_) <- liftIO $ accept sock
                             debug "Accepted client socket"
                             liftIO $ negotiate client
                             chan <- liftIO mkBuffer
-                            let cleanup1 = 
+                            let cleanup1 =
                                     do debug "Closing client socket"
-                                       liftIO $ 
+                                       liftIO $
                                          shutdown client ShutdownBoth `E.catch`
                                            \(_::E.SomeException) -> return ()
                             r <- ask
-                            t <- liftIO . forkIO $ 
-                                 serviceClient chan client `E.catch` 
+                            t <- liftIO . forkIO $
+                                 serviceClient chan client `E.catch`
                                    \(_::E.SomeException) -> runReaderT cleanup1 r
                             let cleanup2 = cleanup1 >>
                                            (liftIO $ killThread t)
-                            liftIO . atomically $ 
-                              readTVar clients >>= 
+                            liftIO . atomically $
+                              readTVar clients >>=
                               writeTVar clients . ((cleanup2,chan) :)
 
 -- |Publish each item obtained from a 'Topic' to each connected client.
@@ -126,10 +126,10 @@ pubStream t0 clients = liftIO $ go 0 t0
 
 -- |Produce a publishing action associated with a list of
 -- clients. This is used by runServers.
-pubStreamIO :: RosBinary a => IO (TVar [(b, RingChan ByteString)] -> Config (), 
+pubStreamIO :: RosBinary a => IO (TVar [(b, RingChan ByteString)] -> Config (),
                                   a -> IO ())
 pubStreamIO = do m <- newEmptyMVar
-                 let feed clients = 
+                 let feed clients =
                        let go !n = do x <- takeMVar m
                                       let bytes = runPut $ putMsg n x
                                       cs <- readTVarIO clients
@@ -141,9 +141,9 @@ pubStreamIO = do m <- newEmptyMVar
 -- Negotiate a TCPROS subscriber connection.
 -- Precondition: The socket is connected
 negotiateSub :: Socket -> String -> String -> String -> IO ()
-negotiateSub sock tname ttype md5 = 
+negotiateSub sock tname ttype md5 =
     do sendAll sock $ genHeader [ ("callerid", "roshask"), ("topic", tname)
-                                , ("md5sum", md5), ("type", ttype) 
+                                , ("md5sum", md5), ("type", ttype)
                                 , ("tcp_nodelay", "1") ]
        responseLength <- runGet (fromIntegral <$> getWord32le) <$>
                          BL.fromChunks . (:[]) <$> recvAll sock 4
@@ -164,12 +164,12 @@ negotiateSub sock tname ttype md5 =
 
 -- |Connect to a publisher and return the stream of data it is
 -- publishing.
-subStream :: forall a. (RosBinary a, MsgInfo a) => 
+subStream :: forall a. (RosBinary a, MsgInfo a) =>
              URI -> String -> (Int -> IO ()) -> Config (Topic IO a)
-subStream target tname _updateStats = 
+subStream target tname _updateStats =
     do debug $ "Opening stream to " ++target++" for "++tname
-       h <- liftIO $ 
-            do response <- requestTopicClient target "/roshask" tname 
+       h <- liftIO $
+            do response <- requestTopicClient target "/roshask" tname
                                               [["TCPROS"]]
                let port = case response of
                             (1,_,("TCPROS",_,port')) -> fromIntegral port'
@@ -283,7 +283,7 @@ negotiateService sock serviceName serviceType md5 = do
       Nothing -> return ()
       Just _ -> throwError . ConHeadExcept $
                 "Connection header from server has error, connection header is: " ++ show connHeader
-                                    
+
 -- Helper to run the publisher's side of a topic negotiation with a
 -- new client.
 mkPubNegotiator :: MsgInfo a => a -> Socket -> IO ()
@@ -293,14 +293,15 @@ mkPubNegotiator x = negotiatePub (msgTypeName x) (sourceMD5 x)
 -- negotiation action given a client 'Socket', a function that returns
 -- a publication action given a client list, a statistics updater, and
 -- the size of the send buffer.
-runServerAux :: (Socket -> IO ()) -> 
-                (TVar [(Config (), RingChan ByteString)] -> Config ()) -> 
+runServerAux :: (Socket -> IO ()) ->
+                (TVar [(Config (), RingChan ByteString)] -> Config ()) ->
                 (URI -> Int -> IO ()) -> Int -> Config (Config (), Int)
-runServerAux negotiate pubAction _updateStats bufferSize = 
+runServerAux negotiate pubAction _updateStats bufferSize =
     do r <- ask
        liftIO . withSocketsDo $ runReaderT go r
   where go = do sock <- liftIO $ socket AF_INET Sock.Stream defaultProtocol
-                liftIO $ bindSocket sock (SockAddrInet aNY_PORT iNADDR_ANY)
+                addr:_ <- liftIO $ getAddrInfo Nothing Nothing Nothing
+                liftIO $ bind sock (addrAddress addr)
                 port <- liftIO (fromInteger . toInteger <$> socketPort sock)
                 liftIO $ listen sock 5
                 clients <- liftIO $ newTVarIO []
@@ -308,8 +309,8 @@ runServerAux negotiate pubAction _updateStats bufferSize =
                 acceptThread <- forkConfig $
                                 acceptClients sock clients negotiate mkBuffer
                 pubThread <- forkConfig $ pubAction clients
-                let cleanup = liftIO (atomically (readTVar clients)) >>= 
-                              sequence_ . map fst >> 
+                let cleanup = liftIO (atomically (readTVar clients)) >>=
+                              sequence_ . map fst >>
                               liftIO (shutdown sock ShutdownBoth >>
                                       killThread acceptThread >>
                                       killThread pubThread)
@@ -320,10 +321,10 @@ runServerAux negotiate pubAction _updateStats bufferSize =
 -- clients. Returns an action for cleaning up resources allocated by
 -- this publication server along with the port the server is listening
 -- on.
-runServer :: forall a. (RosBinary a, MsgInfo a) => 
-             Topic IO a -> (URI -> Int -> IO ()) -> Int -> 
+runServer :: forall a. (RosBinary a, MsgInfo a) =>
+             Topic IO a -> (URI -> Int -> IO ()) -> Int ->
              Config (Config (), Int)
-runServer stream = runServerAux (mkPubNegotiator (undefined::a)) 
+runServer stream = runServerAux (mkPubNegotiator (undefined::a))
                                 (pubStream stream)
 
 -- |The 'MsgInfo' type class dictionary made explicit to strip off the
@@ -343,9 +344,9 @@ data Feeder = Feeder MsgInfoRcd -- Explicit MsgInfo dictionary
 -- size. The returned 'Feeder' value may be supplied to 'runServers',
 -- while the returned 'IO' function may be used to push out new
 -- messages.
-feedTopic :: forall a. (MsgInfo a, RosBinary a) => 
+feedTopic :: forall a. (MsgInfo a, RosBinary a) =>
              (URI -> Int -> IO ()) -> Int -> IO (Feeder, a -> IO ())
-feedTopic updateStats bufSize = 
+feedTopic updateStats bufSize =
   do (feed,pub) <- pubStreamIO
      let f = Feeder info bufSize updateStats feed
      return (f, pub)
@@ -357,6 +358,6 @@ feedTopic updateStats bufSize =
 -- the input 'Feeder's.
 runServers :: [Feeder] -> Config (Config (), [Int])
 runServers = return . first sequence_ . unzip <=< mapM feed
-  where feed (Feeder (MsgInfoRcd md5 typeName) bufSize stats push) = 
+  where feed (Feeder (MsgInfoRcd md5 typeName) bufSize stats push) =
           let pub = negotiatePub typeName md5
           in runServerAux pub push stats bufSize

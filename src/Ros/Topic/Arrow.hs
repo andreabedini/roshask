@@ -22,6 +22,7 @@ import Data.Typeable (Typeable)
 import Data.Foldable (Foldable)
 import Data.Monoid (Monoid)
 
+import Control.Monad.Fail
 import Control.Monad.IO.Class
 import Control.Applicative
 import Control.Category
@@ -194,7 +195,7 @@ weightedMeanNormalized :: Monad m =>
 weightedMeanNormalized alpha invAlpha plus scale normalize =
   TopicArrow $ U.weightedMeanNormalized alpha invAlpha plus scale normalize
 
-simpsonsRule :: (Monad m, Fractional n) =>
+simpsonsRule :: (MonadFail m, Fractional n) =>
                 (a -> a -> a) -> (n -> a -> a) -> TopicArrow m a a
 {-# INLINE simpsonsRule #-}
 simpsonsRule plus scale = TopicArrow $ U.simpsonsRule plus scale

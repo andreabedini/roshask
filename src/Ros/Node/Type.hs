@@ -11,6 +11,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Typeable (gcast)
 import Control.Concurrent (ThreadId)
 import Ros.Internal.RosTypes (URI)
 import Ros.Internal.Util.ArgRemapping (ParamVal)
@@ -72,7 +73,7 @@ instance RosSlave NodeState where
     getSubscriptions = atomically . mapM formatSub . M.toList . subscriptions
         where formatSub (name, sub) = let topicType = subType sub
                                       in do stats <- readTVar (subStats sub)
-                                            stats' <- mapM statSnapshot . 
+                                            stats' <- mapM statSnapshot .
                                                       M.toList $
                                                       stats
                                             return (name, topicType, stats')
@@ -83,12 +84,12 @@ instance RosSlave NodeState where
                                                       M.toList $
                                                       stats
                                             return (name, topicType, stats')
-    publisherUpdate ns name uris = 
+    publisherUpdate ns name uris =
         let act = join.atomically $
                   case M.lookup name (subscriptions ns) of
                     Nothing -> return (return ())
                     Just sub -> do let add = addPub sub >=> \_ -> return ()
-                                   known <- readTVar (knownPubs sub) 
+                                   known <- readTVar (knownPubs sub)
                                    (act',known') <- foldM (connectToPub add)
                                                           (return (), known)
                                                           uris
@@ -102,7 +103,7 @@ instance RosSlave NodeState where
 -- If a given URI is not a part of a Set of known URIs, add an action
 -- to effect a subscription to an accumulated action and add the URI
 -- to the Set.
-connectToPub :: Monad m => 
+connectToPub :: Monad m =>
                 (URI -> IO ()) -> (IO (), Set URI) -> URI -> m (IO (), Set URI)
 connectToPub doSub (act, known) uri = if S.member uri known
                                       then return (act, known)
