@@ -3,7 +3,6 @@
 -- primarily combinators for fusing two 'Topic's in various ways.
 module Ros.Topic.Util where
 import Prelude hiding (dropWhile, filter, splitAt, mapM)
-import Control.Applicative
 import Control.Arrow ((***), second)
 import Control.Concurrent hiding (yield)
 import Control.Concurrent.STM

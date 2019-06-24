@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns, FlexibleContexts, ScopedTypeVariables #-}
-module Ros.Node.RosTcp (subStream, runServer, runServers, callServiceWithMaster) where
+module Ros.Node.RosTcp (subStream, runServer, runServers, feedTopic, callServiceWithMaster) where
 import Control.Applicative ((<$>))
 import Control.Arrow (first)
 import Control.Concurrent (forkIO, killThread, newEmptyMVar, takeMVar, putMVar)
@@ -14,7 +14,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 
 import Network.BSD (getHostByName, hostAddress)
-import Network.Socket hiding (send, sendTo, recv, recvFrom, Stream, ServiceName)
+import Network.Socket hiding (Stream, ServiceName)
 import qualified Network.Socket as Sock
 import Network.Socket.ByteString
 import Prelude hiding (getContents)
