@@ -1,9 +1,9 @@
-Name:                ROS-Turtle
-Version:             0.0
-Synopsis:            I am code
-Cabal-version:       >=1.6
-Category:            Robotics
-Build-type:          Custom
+name:                ROS-Turtle
+version:             0.0
+synopsis:            I am code
+cabal-version:       >=1.6
+category:            Robotics
+build-type:          Custom
 
 custom-setup
   setup-depends:
@@ -11,8 +11,8 @@ custom-setup
     , Cabal
     , roshask
 
-Executable Turtle
-  Build-Depends:  base              >= 4.2 && < 6
+executable Turtle
+  build-depends:  base              >= 4.2 && < 6
                 , vector            >  0.7
                 , time              >= 1.1
                 , roshask           >= 0.3
@@ -21,31 +21,31 @@ Executable Turtle
                 , ROS-std-msgs
                 , ROS-geometry-msgs
                 , ROS-turtlesim-msgs
-  GHC-Options:    -O2 -main-is Turtle
-  Main-Is:        Turtle.hs
-  Hs-Source-Dirs: src
+  ghc-options:    -O2 -main-is Turtle
+  main-is:        Turtle.hs
+  hs-source-dirs: src
 
-Executable Turtle2
-  Build-Depends:  base              >= 4.2 && < 6
+executable Turtle2
+  build-depends:  base              >= 4.2 && < 6
                 , vector            >  0.7
                 , time              >= 1.1
                 , roshask           >= 0.3
                 , vector-space
                 , ROS-std-msgs
                 , ROS-turtlesim-msgs
-  GHC-Options:    -O2 -main-is Turtle2
-  Main-Is:        Turtle2.hs
-  Other-Modules:  AngleNum
-  Hs-Source-Dirs: src
+  ghc-options:    -O2 -main-is Turtle2
+  main-is:        Turtle2.hs
+  other-modules:  AngleNum
+  hs-source-dirs: src
 
-Executable Turtle3
-  Build-Depends:  base              >= 4.2 && < 6
+executable Turtle3
+  build-depends:  base              >= 4.2 && < 6
                 , vector            >  0.7
                 , time              >= 1.1
                 , roshask           >= 0.3
                 , ROS-std-msgs
                 , ROS-turtlesim-msgs
-  GHC-Options:    -O2 -main-is Turtle3
-  Main-Is:        Turtle3.hs
-  Other-Modules:  AngleNum
-  Hs-Source-Dirs: src
+  ghc-options:    -O2 -main-is Turtle3
+  main-is:        Turtle3.hs
+  other-modules:  AngleNum
+  hs-source-dirs: src

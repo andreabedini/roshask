@@ -1,33 +1,25 @@
-Name:                PubSub
-Version:             0.0
-Synopsis:            I am code
-Cabal-version:       >=1.6
-Category:            Robotics
-Build-type:          Simple
--- Build-type:          Custom
+name:                PubSub
+version:             0.0
+synopsis:            I am code
+cabal-version:       >=1.6
+category:            Robotics
+build-type:          Simple
 
--- custom-setup
---   setup-depends:
---       base      >= 4.2 && < 6
---     , roshask
-
-Executable talker
-  Build-Depends:  base             >= 4.2 && < 6
+executable talker
+  build-depends:  base             >= 4.2 && < 6
                 , vector           >= 0.7
                 , time             >= 1.1
                 , roshask          >= 0.3
                 , ROS-std-msgs
-  -- GHC-Options:   -main-is Talker
-  Main-Is:        Talker.hs
-  Hs-Source-Dirs: src
+  main-is:        Talker.hs
+  hs-source-dirs: src
 
-Executable listener
-  Build-Depends:  base             >= 4.2 && < 6
+executable listener
+  build-depends:  base             >= 4.2 && < 6
                 , vector           >= 0.7
                 , time             >= 1.1
                 , roshask          >= 0.3
                 , lens-family-core >= 1.2
                 , ROS-std-msgs
-  -- GHC-Options:    -main-is Listener
-  Main-Is:        Listener.hs
-  Hs-Source-Dirs: src
+  main-is:        Listener.hs
+  hs-source-dirs: src

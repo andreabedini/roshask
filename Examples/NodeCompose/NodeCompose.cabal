@@ -1,10 +1,10 @@
-Name:              ROS-NodeCompose
-Version:           0.0
-Synopsis:          I am code
-Cabal-version:     >=1.6
-Category:          Robotics
-Build-type:        Custom
-Description: A demonstration of composing two Node values in order to
+name:              ROS-NodeCompose
+version:           0.0
+synopsis:          I am code
+cabal-version:     >=1.6
+category:          Robotics
+build-type:        Custom
+description: A demonstration of composing two Node values in order to
              avoid copying values between processes. All image data is
              kept in process, and pushed over the Topic connecting
              telescope and detectUFO with a pointer copy.
@@ -15,7 +15,7 @@ custom-setup
     , Cabal
     , roshask
 
-Executable composition
+executable composition
   build-depends:   base             >= 4.2 && < 6
                  , vector           >  0.7
                  , time             >= 1.1
@@ -29,8 +29,8 @@ Executable composition
   main-is:         Main.hs
   other-modules:   Telescope DetectUFO
 
-Executable scope
-  Build-Depends:   base             >= 4.2 && < 6
+executable scope
+  build-depends:   base             >= 4.2 && < 6
                  , vector           >  0.7
                  , time             >= 1.1
                  , roshask          >= 0.3
@@ -42,7 +42,7 @@ Executable scope
   hs-source-dirs:  src
   main-is:         Telescope.hs
 
-Executable detect
+executable detect
   build-depends:   base             >= 4.2 && < 6
                  , vector           >  0.7
                  , time             >= 1.1
