@@ -9,8 +9,14 @@ Description: A demonstration of composing two Node values in order to
              kept in process, and pushed over the Topic connecting
              telescope and detectUFO with a pointer copy.
 
+custom-setup
+  setup-depends:
+      base      >= 4.2 && < 6
+    , Cabal
+    , roshask
+
 Executable composition
-  Build-Depends:   base             >= 4.2 && < 6
+  build-depends:   base             >= 4.2 && < 6
                  , vector           >  0.7
                  , time             >= 1.1
                  , roshask          >= 0.3
@@ -18,11 +24,10 @@ Executable composition
                  , mtl
                  , ROS-std-msgs
                  , ROS-sensor-msgs
-  GHC-Options:     -Odph -threaded
-  GHC-Prof-Options:-prof -auto-all -caf-all
-  Hs-Source-Dirs:  src
-  Main-Is:         Main.hs
-  Other-Modules:   Telescope DetectUFO
+  ghc-options:     -threaded
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  other-modules:   Telescope DetectUFO
 
 Executable scope
   Build-Depends:   base             >= 4.2 && < 6
@@ -33,13 +38,12 @@ Executable scope
                  , mtl
                  , ROS-std-msgs
                  , ROS-sensor-msgs
-  GHC-Options:     -Odph -threaded -main-is Telescope
-  GHC-Prof-Options:-prof -auto-all -caf-all
-  Hs-Source-Dirs:  src
-  Main-Is:         Telescope.hs
+  ghc-options:     -threaded -main-is Telescope
+  hs-source-dirs:  src
+  main-is:         Telescope.hs
 
 Executable detect
-  Build-Depends:   base             >= 4.2 && < 6
+  build-depends:   base             >= 4.2 && < 6
                  , vector           >  0.7
                  , time             >= 1.1
                  , roshask          >= 0.3
@@ -47,7 +51,6 @@ Executable detect
                  , mtl
                  , ROS-std-msgs
                  , ROS-sensor-msgs
-  GHC-Options:     -Odph -threaded -main-is DetectUFO
-  GHC-Prof-Options:-prof -auto-all -caf-all
-  Hs-Source-Dirs:  src
-  Main-Is:         DetectUFO.hs
+  ghc-options:     -threaded -main-is DetectUFO
+  hs-source-dirs:  src
+  main-is:         DetectUFO.hs

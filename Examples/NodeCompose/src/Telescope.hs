@@ -4,6 +4,7 @@ module Telescope (telescope, main) where
 import Ros.Node
 import Ros.Topic (repeatM)
 import Ros.Topic.Transformers (runTopicState')
+import Ros.Topic.Util (topicRate)
 import Ros.Std_msgs.Header (Header(..))
 import Ros.Sensor_msgs.Image (Image(..))
 import Data.Word (Word8)

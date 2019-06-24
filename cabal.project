@@ -1,0 +1,7 @@
+packages:
+  roshask.cabal
+  msgs/*/*.cabal
+  Examples/NodeCompose/NodeCompose.cabal
+  Examples/PubSub/PubSub.cabal
+  Examples/Turtle/Turtle.cabal
+

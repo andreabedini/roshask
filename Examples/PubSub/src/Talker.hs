@@ -1,4 +1,3 @@
-module Talker (main) where
 import Data.Time.Clock (getCurrentTime)
 import Ros.Node
 import Ros.Topic (repeatM)
